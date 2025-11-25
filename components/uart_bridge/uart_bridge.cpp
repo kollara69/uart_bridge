@@ -1,5 +1,19 @@
 #include "uart_bridge.h"
-UARTBridge(uart::UARTComponent *mcu, uart::UARTComponent *disp);
+static const char *TAG = "uart_bridge";
+
+UARTBridge::UARTBridge(uart::UARTComponent *mcu, uart::UARTComponent *disp) {
+  this->uart1 = mcu;
+  this->uart2 = disp;
+}
+
+void setup() { /* … */ }
+void loop() { /* … */ }
+
+// Registration
+void register_uart_bridge_component(UARTBridge *comp) {
+  // esp/home registration code
+}
+
 
 namespace esphome {
 namespace uart_bridge {

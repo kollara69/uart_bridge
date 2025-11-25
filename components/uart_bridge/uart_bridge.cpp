@@ -1,25 +1,18 @@
 #include "uart_bridge.h"
+#include "esphome/core/log.h"
+
+namespace esphome {
+namespace uart_bridge {
+
 static const char *TAG = "uart_bridge";
 
+// Konstruktor
 UARTBridge::UARTBridge(uart::UARTComponent *mcu, uart::UARTComponent *disp) {
   this->uart1 = mcu;
   this->uart2 = disp;
 }
 
-void setup() { /* … */ }
-void loop() { /* … */ }
-
-// Registration
-void register_uart_bridge_component(UARTBridge *comp) {
-  // esp/home registration code
-}
-
-
-namespace esphome {
-namespace uart_bridge {
-
-// No additional registration needed – all logic in h file.
-// This file exists to make ESPHome's build system happy.
+// A setup() és loop() már a header-ben definiálva van, itt nem kell újra implementálni
 
 }  // namespace uart_bridge
 }  // namespace esphome

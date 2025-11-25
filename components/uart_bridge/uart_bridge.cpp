@@ -1,4 +1,5 @@
 #include "uart_bridge.h"
+UARTBridge(uart::UARTComponent *mcu, uart::UARTComponent *disp);
 
 namespace esphome {
 namespace uart_bridge {

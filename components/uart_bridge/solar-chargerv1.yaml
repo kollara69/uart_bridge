@@ -1,1 +1,156 @@
+esphome:
+  name: solar-charger-debug
+# Wemos Mini esp32 modul
+esp32:
+  board: wemos_d1_mini32
+  framework:
+    type: arduino
 
+wifi:
+  ssid: "*****"
+  password: "*****"
+#  manual_ip:
+#    static_ip: 192.168.1.8
+#    gateway: 192.168.1.1
+#    subnet: 255.255.255.0
+  power_save_mode: none
+  min_auth_mode: WPA
+logger:
+  level: DEBUG
+  baud_rate: 115200
+
+api:
+
+ota:
+  platform: esphome
+
+# UART portok
+uart:
+  - id: uart_mcu
+    tx_pin: GPIO17
+    rx_pin: GPIO16
+    baud_rate: 9600
+    rx_buffer_size: 512
+
+  - id: uart_display
+    tx_pin: GPIO25
+    rx_pin: GPIO26
+    baud_rate: 9600
+    rx_buffer_size: 512
+
+# CUSTOM COMPONENT
+uart_bridge:
+  id: bridge
+  uart_mcu_id: uart_mcu
+  uart_display_id: uart_display
+
+# HEX FRAME TEXT SENSORS
+text_sensor:
+  - platform: template
+    name: "MCU -> Display Last Frame (HEX)"
+    id: sensor_mcu_to_display
+    update_interval: 1s
+    lambda: |-
+      auto s = id(bridge)->get_last_mcu_to_display();
+      if (s.size() == 0) return std::string("");
+      return s;
+
+  - platform: template
+    name: "Display -> MCU Last Frame (HEX)"
+    id: sensor_display_to_mcu
+    update_interval: 1s
+    lambda: |-
+      auto s = id(bridge)->get_last_display_to_mcu();
+      if (s.size() == 0) return std::string("");
+      return s;
+
+  # Load ON Start Time
+  - platform: template
+    name: "Load Start Time"
+    lambda: |-
+      auto frame = id(sensor_mcu_to_display).state;
+      if(frame.size() >= 40) {
+        char buf[6];
+        int h = strtol(frame.substr(16,2).c_str(), nullptr, 16);
+        int m = strtol(frame.substr(18,2).c_str(), nullptr, 16);
+        snprintf(buf, sizeof(buf), "%02d:%02d", h, m);
+        return std::string(buf);
+      }
+      return std::string("12:00");
+
+  # Load OFF Time
+  - platform: template
+    name: "Load End Time"
+    lambda: |-
+      auto frame = id(sensor_mcu_to_display).state;
+      if(frame.size() >= 44) {
+        char buf[6];
+        int h = strtol(frame.substr(20,2).c_str(), nullptr, 16);
+        int m = strtol(frame.substr(22,2).c_str(), nullptr, 16);
+        snprintf(buf, sizeof(buf), "%02d:%02d", h, m);
+        return std::string(buf);
+      }
+      return std::string("12:00");
+
+
+# NUMERIC SENSORS
+sensor:
+  # Battery Voltage (bytes 4â5)
+  - platform: template
+    name: "Battery Voltage"
+    unit_of_measurement: "V"
+    lambda: |-
+      auto frame = id(sensor_mcu_to_display).state;
+      if(frame.size() > 10) {
+        int value = strtol(frame.substr(4,4).c_str(), nullptr, 16);
+        return value / 100.0;
+      }
+      return 0.0;
+
+  # Charge Current (bytes 6â7)
+  - platform: template
+    name: "Charge Current"
+    unit_of_measurement: "A"
+    lambda: |-
+      auto frame = id(sensor_mcu_to_display).state;
+      if(frame.size() > 14) {
+        int value = strtol(frame.substr(8,4).c_str(), nullptr, 16);
+        return value / 100.0;
+      }
+      return 0.0;
+
+  # PV Voltage (bytes 8â9)
+  - platform: template
+    name: "PV Voltage"
+    unit_of_measurement: "V"
+    lambda: |-
+      auto frame = id(sensor_mcu_to_display).state;
+      if(frame.size() > 18) {
+        int value = strtol(frame.substr(12,4).c_str(), nullptr, 16);
+        return value / 10;
+      }
+      return 0.0;
+
+  # Float Voltage
+  - platform: template
+    name: "Float Voltage"
+    unit_of_measurement: "V"
+    lambda: |-
+      auto frame = id(sensor_mcu_to_display).state;
+      if(frame.size() > 22) {
+        int value = strtol(frame.substr(16,4).c_str(), nullptr, 16);
+        return value / 100.0;
+      }
+      return 0.0;
+
+  # Bulk Voltage
+  - platform: template
+    name: "Bulk Voltage"
+    unit_of_measurement: "V"
+    lambda: |-
+      auto frame = id(sensor_mcu_to_display).state;
+      if(frame.size() > 26) {
+        int value = strtol(frame.substr(20,4).c_str(), nullptr, 16);
+        return value / 100.0;
+      }
+      return 0.0;
